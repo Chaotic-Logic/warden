@@ -21,7 +21,17 @@ Running commands on someone's machine is an outward-facing action with real blas
 
 ### Getting connectivity
 
-- SSH is the path, and it's **public-key auth only**. Disable the fallbacks explicitly so ssh can never drop to a password prompt: `ssh -o PreferredAuthentications=publickey -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no user@host`. A passphrase on the *local* key is fine (the agent unlocks it); password or keyboard-interactive auth *to the server* is forbidden. No key present, or the key's rejected -> stop and say so, don't fall back to a password and never ask for one in chat or put it on a command line or in a file.
+- SSH is the path, and it's **public-key auth only**. Disable the fallbacks explicitly so ssh can never drop to a password prompt: `ssh -o PreferredAuthentications=publickey -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no user@host`. A passphrase on the *local* key is fine (the agent unlocks it); password or keyboard-interactive auth *to the server* is forbidden. No key present, or the key's rejected -> stop, don't fall back to a password, and never ask for one in chat or put it on a command line or in a file. Then hand the user the setup runbook below instead of leaving them stuck.
+
+**No key yet? Walk the user through it.** warden won't do the one-time password login that seeds a key (that would break the key-only rule) — that step is the user's; warden takes over the moment key auth works. Give them this:
+
+1. **Make a key** (skip if `ls ~/.ssh/id_*` already shows one): `ssh-keygen -t ed25519 -a 100 -C "you@purpose"`. ed25519 over RSA; set a passphrase so a stolen key file is useless on its own.
+2. **Put the public key on the server** — `~/.ssh/authorized_keys` on the target, one of:
+   - Still have a password login of your own? `ssh-copy-id -i ~/.ssh/id_ed25519.pub user@host` (this is you authenticating with the password once, not warden).
+   - Cloud/VM: paste the contents of `id_ed25519.pub` into the provider's SSH-key field or cloud-init; it lands in `authorized_keys` on boot.
+   - Console/existing access: append the `.pub` line yourself, then fix perms — `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`, and the file must be owned by that user.
+3. **Verify key login works before anything else:** `ssh -o PreferredAuthentications=publickey user@host` should get you in with no password prompt. Now warden can connect.
+4. **Then close the door** (recommend it; it's a state change, so it's confirmed, not automatic): keep your working session open, set `PasswordAuthentication no` and `KbdInteractiveAuthentication no` in a `/etc/ssh/sshd_config.d/` drop-in, `sudo sshd -t` to check syntax, `sudo systemctl reload ssh`, and confirm a fresh key login in a *second* terminal before you let go of the first. Never lock yourself out to look secure.
 - Multi-hop: if the target sits behind a bastion, use `ssh -J bastion user@target` (ProxyJump) rather than agent-forwarding into an untrusted middle box.
 - Confirm you're on the right machine before anything else: `hostname -f` and check it against what the user named. Wrong-box commands are how outages start.
 - Run non-interactive, read-only commands. Batch the inventory into one round-trip where you can; a live box doesn't need forty separate SSH sessions.

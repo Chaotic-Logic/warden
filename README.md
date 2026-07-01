@@ -30,7 +30,7 @@ Diagnosis in **triage** is the one place it moves fast and loose (reading logs, 
 
 ## What it needs
 
-- **SSH to the target by public key** (or run it against the local box). Key auth only: warden disables password fallback on the connection, and if a box offers only password auth it stops rather than connect. A passphrase on your local key is fine; your agent unlocks it. It never asks for a password in chat or puts one on a command line.
+- **SSH to the target by public key** (or run it against the local box). Key auth only: warden disables password fallback on the connection, and if a box offers only password auth it stops rather than connect. A passphrase on your local key is fine; your agent unlocks it. It never asks for a password in chat or puts one on a command line. No key set up yet? It walks you through generating one and getting it onto the server (you do the one-time seeding; warden takes over once key login works).
 - **The host's own tooling, where it's there.** warden leans on standard packages for the deep checks: `smartmontools` and `lm_sensors` for hardware, `lynis` / `openscap` for hardening, `debsecan` / `arch-audit` / `dnf updateinfo` for CVEs, `trivy` or `grype` and `docker-bench-security` for containers. None are required. When one's missing, warden says so and works with what's there; a check it couldn't run is reported as skipped, never counted as a pass.
 
 ## Seating the watch
