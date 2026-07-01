@@ -11,6 +11,7 @@ Depth lives in `references/`:
 - `references/cve-by-distro.md` — the exact CVE/patch-status commands per package manager (apt/debsecan, dnf updateinfo, arch-audit, zypper), plus scanner options (Grype/Trivy) and integrity checks.
 - `references/hardening-checklist.md` — the config-review checklist (SSH, sudo/PAM, kernel sysctls, firewall, file perms, accounts) with the command for each line.
 - `references/docker-security.md` — for hosts running Docker/a container runtime: image CVE scanning, daemon and CIS-benchmark hardening, and the runtime red flags (exposed socket, tcp daemon, `--privileged`, host namespaces).
+- `references/selinux.md` — mandatory access control: checking it's on, recommending `enforcing` SELinux where the distro ships it (and AppArmor elsewhere), the safe enable path, and the basics of using it.
 
 Don't re-derive those inline; read the reference and work from it.
 
@@ -37,9 +38,11 @@ Don't re-derive those inline; read the reference and work from it.
 - World-writable files/dirs, especially without the sticky bit: `find / -xdev -perm -0002 -type f 2>/dev/null`.
 - Package integrity: `rpm -Va` (rpm distros) / `debsums -c` (debian) — files that drift from what the package shipped. See the reference.
 
-**5. CVEs vs installed packages** — the real "am I running something known-bad" check. Distro-specific; the commands are in `references/cve-by-distro.md`. In short: use the distro's own security-update feed first (`dnf updateinfo list security`, `apt` + `debsecan`, `arch-audit`, `zypper list-patches`), because it maps CVEs to the exact patched package version for your release. Reach for Grype/Trivy on top when you want a scanner's view or you're auditing container images.
+**5. Mandatory access control** — is SELinux/AppArmor actually guarding this box. On RHEL-family (SELinux-native): `getenforce` / `sestatus` — `Enforcing` is the goal; `Permissive` or `Disabled` is a finding, and warden recommends turning it on and offers to walk the user through it. On Debian/Ubuntu/SUSE (AppArmor): `aa-status` — profiles loaded and enforcing. A box with no MAC active at all is the finding regardless of which system it should run. Don't recommend SELinux on an AppArmor distro; that's a migration, not a hardening step. Enabling it is a state change, so it's proposed and taught, never flipped automatically. Depth and the safe enable path in `references/selinux.md`.
 
-**6. Containers (only if `recon` found Docker/a runtime)** — a Docker host has a whole second attack surface on top of the OS. Full depth in `references/docker-security.md`; the shape:
+**6. CVEs vs installed packages** — the real "am I running something known-bad" check. Distro-specific; the commands are in `references/cve-by-distro.md`. In short: use the distro's own security-update feed first (`dnf updateinfo list security`, `apt` + `debsecan`, `arch-audit`, `zypper list-patches`), because it maps CVEs to the exact patched package version for your release. Reach for Grype/Trivy on top when you want a scanner's view or you're auditing container images.
+
+**7. Containers (only if `recon` found Docker/a runtime)** — a Docker host has a whole second attack surface on top of the OS. Full depth in `references/docker-security.md`; the shape:
 - Image CVEs: scan every image in play, not just the OS packages — `trivy image <img>` / `grype <img>` / `docker scout cves <img>`. Container images carry their own vulnerable OS and app-dependency layers.
 - Daemon + host config: `docker-bench-security` runs the CIS Docker Benchmark. Check `daemon.json`, socket ownership, whether rootless/userns-remap is in play.
 - The high-severity runtime flags, worth checking first because they're host-takeover class: the daemon socket exposed over tcp (`2375` unencrypted) or bind-mounted into a container, and any `--privileged` container. Then host namespaces (`--pid=host`, `--net=host`), added capabilities, and containers running as root.

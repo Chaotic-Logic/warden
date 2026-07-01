@@ -63,6 +63,12 @@ Don't cargo-cult a giant sysctl blob; check these, justify anything you'd change
 - Legacy/cleartext services (telnet, rsh, vsftpd anon, unauth NFS) — should not be present on a modern server.
 - Time sync running (chrony/systemd-timesyncd) — cert validation and log correlation depend on it.
 
+## Mandatory access control
+
+- Is a MAC actually enforcing? SELinux on RHEL-family: `getenforce` (want `Enforcing`), `sestatus`. AppArmor on Debian/Ubuntu/SUSE: `aa-status` (profiles loaded, in enforce mode).
+- A box with no MAC active is a finding. On a SELinux-native distro, `Disabled`/`Permissive` is the finding and the fix is to enable it — safely, and taught, not flipped. Full runbook and the day-to-day lessons in `selinux.md`.
+- Don't recommend SELinux on an AppArmor distro (or vice versa); check whichever the distro ships.
+
 ## Updates + patch discipline
 
 - Automatic security updates configured? (`unattended-upgrades` on debian, `dnf-automatic` on rhel). Note whether it's on and whether it's set to security-only.
