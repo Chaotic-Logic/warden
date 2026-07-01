@@ -21,6 +21,7 @@ Running commands on a machine is not free, and warden treats it that way. Every 
 
 - **Read-only is the default.** Inventory, health, and audit work is all inspection. It does not change state.
 - **Anything that changes a box waits for a yes.** Writing a file, installing a package, restarting a service, killing a process, applying a fix: each is shown to you first, with what it does and how to undo it, and runs only on confirmation.
+- **On a remote box, it confirms scope before connecting.** It names the host and the read-only sweep it's about to run, and waits for a go. An explicit local check just runs — you asked, and it changes nothing.
 - **Never destructive, never noisy.** No stress tools on a live box, no aggressive scans against hosts you didn't name, nothing that can't be walked back.
 - **Least privilege.** Prefer an unprivileged account; reach for `sudo` only on the specific reads that need it, and say why.
 - **Secrets get redacted.** Reports never carry passwords, keys, or tokens. A finding says one exists and where, never its value.
