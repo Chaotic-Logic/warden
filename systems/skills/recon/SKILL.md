@@ -1,6 +1,6 @@
 ---
 name: recon
-description: Base skill for reaching a Linux host and taking stock of it before any system-engineering or security work. Covers getting connectivity (SSH, jump/bastion hops, confirming the target), the safe-ops posture every warden skill inherits (read-only by default, confirm before changing state, least privilege, redact secrets, never destructive), and building a host profile — distro, kernel, arch, CPU, memory, disks, virt/container, package manager. Use as the shared groundwork the health-check, security-audit, and triage skills build on; invoke directly when the task is "get me onto the box and tell me what it is." Triggers on "connect to my server", "ssh into", "what distro/kernel/hardware is this box", "take stock of this host", "inventory the machine", or any warden work that needs a live host first.
+description: Base skill for reaching a Linux host and taking stock of it before any system-engineering or security work. Covers getting connectivity (SSH, jump/bastion hops, confirming the target), the safe-ops posture every warden skill inherits (read-only by default, confirm before changing state, least privilege, redact secrets, never destructive), and building a host profile — distro, kernel, arch, CPU, memory, disks, virt/container, package manager — then, once the OS is identified, a version-currency check (installed vs available, running vs newest kernel, and whether the release is still supported). Use as the shared groundwork the health-check, security-audit, and triage skills build on; invoke directly when the task is "get me onto the box and tell me what it is." Triggers on "connect to my server", "ssh into", "what distro/kernel/hardware is this box", "take stock of this host", "inventory the machine", or any warden work that needs a live host first.
 ---
 
 ## recon — reach the box, take stock, touch nothing you didn't have to
@@ -64,6 +64,16 @@ One compact pass. Everything here is read-only and safe on a live box.
 | Init / services | `systemctl --version`, `systemctl is-system-running` | most of this is systemd; note if it isn't |
 
 Record `ID`/`VERSION_ID` and the package manager explicitly — `security-audit` and `health-check` both branch on them, and container vs bare-metal decides whether SMART/sensors/RAID checks even apply. Note whether a container runtime (docker/podman) is up too; that turns on the container health and image-scan checks in the other two skills.
+
+### Version currency — check it the moment the OS is identified
+
+Identifying the OS is the trigger, not the finish line: right away, establish how current the box is against what's actually current for its family. Two sources feed that, and neither is warden's memory — the model's idea of "the latest release" is frozen at its training cutoff and drifts, so treat any version number it recalls as *verify this*, not fact.
+
+- **What the box's own repos offer** (authoritative for "am I behind on my release"): refresh the package metadata and list what's upgradable. `sudo apt update && apt list --upgradable`; `dnf check-update`; `zypper ref && zypper lu`; on Arch use `checkupdates` (from `pacman-contrib`, it syncs to a temp db) rather than `pacman -Sy`, which arms a partial-upgrade trap. These are metadata refreshes — safe reads, they install nothing.
+- **Kernel**: running vs newest installed — `uname -r` against the newest kernel package (`rpm -q kernel`, `dpkg -l 'linux-image-*'`, `pacman -Q linux`). Running older than what's installed is a pending-reboot finding.
+- **Is the release itself still supported** (the EOL question): check `/etc/os-release` against an authoritative lifecycle source, not memory. `endoflife.date` has an API — `curl -s https://endoflife.date/api/<product>.json` (ubuntu, debian, rhel, almalinux, rockylinux, fedora, opensuse, sles, amazon-linux, and `linux` for kernel LTS lines) — or the vendor's own lifecycle page. Where warden has web access, verify there; where it doesn't, report the release as looking EOL/behind *pending verification* and name the source to check.
+
+Hand the numbers to `health-check` (pending updates, kernel reboot) and `security-audit` (EOL -> the rebuild call, CVE exposure). Flag confidence on anything not pulled live from the box or an authoritative source.
 
 ### Handoff
 

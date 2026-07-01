@@ -17,7 +17,7 @@ If the sweep turns up something actively broken (a unit crash-looping, a disk at
 
 Run it in order. First get the profile from `recon` (distro, kernel, arch, CPU, memory, disks, virt/container). `systemd-detect-virt` decides how much of the hardware section applies — SMART/sensors/RAID are meaningless inside most VMs and containers; say so and skip rather than inventing numbers.
 
-**1. Distro + specs** — from `recon`: `os-release`, `uname -srm`, `lscpu`, `free -h`, `lsblk`. This is the header of the report. If the release is end-of-life (no more security updates), that's a headline finding, not a footnote — surface it here and hand it to `security-audit` for the rebuild call (regenerate, don't resurrect).
+**1. Distro + specs** — from `recon`: `os-release`, `uname -srm`, `lscpu`, `free -h`, `lsblk`. This is the header of the report. Run the version-currency check `recon` sets up: installed vs what the box's repos offer, and running kernel vs newest installed. Behind-on-updates and a pending reboot into a newer kernel are Device Health findings; an out-of-support release is the headline, not a footnote — surface it here and hand it to `security-audit` for the rebuild call (regenerate, don't resurrect). Establish "current" from the box and an authoritative lifecycle source, never from memory.
 
 **2. Hardware health (bare metal / passthrough only)**
 - Disks (SMART): `smartctl -H /dev/sdX` for the one-line verdict, `smartctl -a /dev/sdX` for the detail. NVMe: `smartctl -a /dev/nvmeX` or `nvme smart-log /dev/nvmeX`. Watch reallocated/pending sectors, media errors, wear level, and the overall PASSED/FAILED. Needs `smartmontools`; note if it's absent rather than skipping silently.
