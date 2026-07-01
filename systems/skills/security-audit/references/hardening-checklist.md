@@ -14,6 +14,8 @@ Config-level review, command per line. All read-only. Findings feed the Security
 - `allowusers` / `allowgroups` — scoping who can SSH at all is cheap and strong.
 - Non-default port is obscurity, not security; don't count it as a control, but note it so it isn't mistaken for a closed port.
 - Ciphers/MACs/KEX: flag known-weak (CBC ciphers, `hmac-md5`, SHA-1 KEX) only if you're held to a compliance baseline; otherwise the distro defaults are usually fine.
+- **First-match-wins.** sshd keeps the first value it sees for a key, and the `sshd_config.d/*.conf` drop-ins are read in alphabetical order. A setting only wins if it appears before anything that already set it (an earlier file, or a `Match` block), so name a hardening drop-in to sort ahead, and trust `sshd -T` over the file you wrote.
+- **Hardware-backed keys** (`ed25519-sk`/`ecdsa-sk`, a FIDO2 token) where the user has one; the private half never leaves the device, so a stolen disk image yields nothing. A strong split is SSH keys for login and a hardware-backed one-time code for privilege escalation (sudo), so getting in and stepping up to root lean on different mechanisms.
 
 ## Accounts + authentication
 
@@ -21,7 +23,7 @@ Config-level review, command per line. All read-only. Findings feed the Security
 - Empty passwords: `awk -F: '($2==""){print $1}' /etc/shadow` — none.
 - Login shells on system accounts: service accounts should be `nologin`/`false`, not a real shell.
 - Stale accounts: `lastlog | awk '$2=="**Never**"'` — accounts that never log in but could.
-- Failed logins / brute force: `lastb | head`, `journalctl -u ssh --no-pager | grep -i fail`. Repeated hits from one source = fail2ban's job; check it's running.
+- Failed logins / brute force: `lastb | head`, `journalctl -u ssh --no-pager | grep -i fail`. Repeated hits from one source = fail2ban's job; check it's running. Keep fail2ban even on a key-only box: turning off password auth doesn't make it pointless, it still bans the noise, shrinks log volume, and leaves an evidence trail of who's knocking. "Brute-force protection is useless once passwords are off" is wrong.
 - Password aging policy: `/etc/login.defs` (`PASS_MAX_DAYS`, `PASS_MIN_LEN` era) and PAM `pam_pwquality`/`pam_faillock` config for lockout on repeated failures.
 
 ## sudo / privilege
@@ -35,6 +37,7 @@ Config-level review, command per line. All read-only. Findings feed the Security
 - Backend in use and its ruleset: `nft list ruleset` / `iptables -S` / `ufw status verbose` / `firewall-cmd --list-all`.
 - Default inbound policy: default-deny or not. Fail closed.
 - Only intended ports open; cross-check against `ss -tulpn` from the health/audit pass.
+- Public ports earn their place: SSH, HTTP/HTTPS, and the app/game ports you actually serve. Management surfaces (databases, RCON, telnet, web dashboards, the Docker API, monitoring) belong on a mesh/VPN interface, not `0.0.0.0`. If it's admin, it shouldn't face the internet.
 - IPv6: same rules apply. A box firewalled on v4 and wide open on v6 is a common miss — check both.
 
 ## Kernel hardening (sysctl)
@@ -72,6 +75,7 @@ Don't cargo-cult a giant sysctl blob; check these, justify anything you'd change
 ## Updates + patch discipline
 
 - Automatic security updates configured? (`unattended-upgrades` on debian, `dnf-automatic` on rhel). Note whether it's on and whether it's set to security-only.
+- Read the transaction before you apply it. No blind `dnf -y` / `apt -y` on a box that matters; look at what's added, upgraded, and especially **removed** — dependency resolution will cheerfully pull a package you wanted (removing an old mail server that takes `fail2ban` down with it is a real way to un-harden yourself by accident). Read it, then say yes.
 - Pending reboot for a kernel/glibc update — a patched-but-not-rebooted box is still vulnerable. Cross-check with the CVE reference.
 
 ## Logging + audit

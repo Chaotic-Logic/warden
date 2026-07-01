@@ -2,6 +2,8 @@
 
 Mandatory access control is a real hardening layer: even a compromised root-running service is boxed to what policy allows. warden checks it's on where it should be, recommends turning it on when it's off on an applicable box, and (because that's a state change) teaches the safe path rather than flipping it.
 
+The payoff that earns the trouble: it blocks whole classes of container escape at the kernel, and it caps the blast radius of ransomware or a compromised service to what policy allows instead of the whole disk. Leaving it enforcing is a sensible upgrade, not the heresy some treat it as — the reflex to `setenforce 0` at the first denial is the actual mistake. On a Docker host especially, label the bind mounts (`:z`/`:Z` on the mount, or `semanage fcontext` + `restorecon`) rather than reaching for `--privileged` or switching SELinux off.
+
 ## Where SELinux applies — don't cargo-cult it
 
 - **RHEL-family** (RHEL, Rocky, Alma, CentOS, Fedora, Oracle) ships SELinux as the native MAC. On these, `Disabled` or `Permissive` is a genuine gap; recommend `Enforcing`.
