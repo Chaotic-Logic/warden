@@ -12,6 +12,7 @@ Groundwork for every warden skill. `health-check`, `security-audit`, and `triage
 Running commands on someone's machine is an outward-facing action with real blast radius. Every warden skill inherits these; they are not optional.
 
 - **Confirm the target before the first command.** Which host, which user, whose box, and do we have authorization to touch it. Never assume `localhost` when the ask names a server; never guess a hostname. If the box isn't yours, get explicit go-ahead first, and log that you're operating on it.
+- **Public-key SSH only, no exceptions.** warden reaches a host with key auth and nothing else. If a box offers only password or keyboard-interactive auth, it stops rather than connect (fail closed). The exact flags are in Getting connectivity below.
 - **Read before you touch. Read-only is the default mode.** Inventory, health, and audit work is all inspection — it must not change state. Anything that writes, installs, restarts, edits config, or kills a process is a separate step that gets shown and confirmed first (see the vibe-gate: diagnosis runs loose, changes run structured).
 - **Least privilege.** Prefer an unprivileged account. Reach for `sudo` only for the specific commands that need it (SMART reads, some log paths, firewall state), and say why. Don't hand yourself root for a job a normal user can do.
 - **Never destructive, never noisy.** No fork bombs, no `dd` onto a live disk, no stress tools that starve a production box, no aggressive scans against hosts you weren't asked to scan. Health/audit reads are cheap and safe; keep them that way.
@@ -20,7 +21,7 @@ Running commands on someone's machine is an outward-facing action with real blas
 
 ### Getting connectivity
 
-- SSH is the path. Prefer key auth; if a password or passphrase is needed, let the user's agent/ssh handle it — don't ask for it in chat and never put it in a command line or a file.
+- SSH is the path, and it's **public-key auth only**. Disable the fallbacks explicitly so ssh can never drop to a password prompt: `ssh -o PreferredAuthentications=publickey -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no user@host`. A passphrase on the *local* key is fine (the agent unlocks it); password or keyboard-interactive auth *to the server* is forbidden. No key present, or the key's rejected -> stop and say so, don't fall back to a password and never ask for one in chat or put it on a command line or in a file.
 - Multi-hop: if the target sits behind a bastion, use `ssh -J bastion user@target` (ProxyJump) rather than agent-forwarding into an untrusted middle box.
 - Confirm you're on the right machine before anything else: `hostname -f` and check it against what the user named. Wrong-box commands are how outages start.
 - Run non-interactive, read-only commands. Batch the inventory into one round-trip where you can; a live box doesn't need forty separate SSH sessions.
