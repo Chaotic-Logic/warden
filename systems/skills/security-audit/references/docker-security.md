@@ -63,6 +63,7 @@ done
   - `"userland-proxy": false` where the setup allows.
 - Socket ownership: `/var/run/docker.sock` should be `root:docker`, `660`. Membership in the `docker` group is root-equivalent on the host — audit who's in it (`getent group docker`), least-privilege applies hard here.
 - **Rootless mode** is the strong move where the workload tolerates it: the daemon runs as a normal user, so an escape lands as that user, not root. Note whether it's in use.
+- **Published ports bypass the host firewall.** `-p 80:80` (or a compose `ports:` mapping) inserts a Docker DNAT rule that is evaluated before firewalld/ufw's filter rules, so a published port is reachable from the internet even when the firewall zone doesn't list it — the firewall's port list understates real exposure on a Docker host. Two consequences: don't read a closed firewalld zone as proof a service is unreachable (check `docker ps` / the compose `ports:` for what's actually published); and if ingress is meant to arrive only through a tunnel (cloudflared, Tailscale Funnel) or an off-box reverse proxy, containers should bind the internal network or `127.0.0.1`, not host-publish to `0.0.0.0`, or they're reachable both through the tunnel and directly and the tunnel's origin-hiding is moot. Scope published-port exposure with the `DOCKER-USER` iptables chain.
 
 ## Reporting
 

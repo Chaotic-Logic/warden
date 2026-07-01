@@ -38,6 +38,7 @@ Config-level review, command per line. All read-only. Findings feed the Security
 - Default inbound policy: default-deny or not. Fail closed.
 - Only intended ports open; cross-check against `ss -tulpn` from the health/audit pass.
 - Public ports earn their place: SSH, HTTP/HTTPS, and the app/game ports you actually serve. Management surfaces (databases, RCON, telnet, web dashboards, the Docker API, monitoring) belong on a mesh/VPN interface, not `0.0.0.0`. If it's admin, it shouldn't face the internet.
+- A near-closed inbound firewall is not automatically a misconfig. An **outbound tunnel** (cloudflared / Cloudflare Tunnel, Tailscale Funnel) or an off-box reverse proxy delivers ingress over an established outbound connection, so web services can run with no matching open port — that's the intended design (origin IP hidden, traffic forced through the edge). Don't flag a default-DROP firewall with services listening as a hole when a tunnel explains the ingress. Do verify the tunnel is the *only* ingress: on a Docker host a `-p` published port bypasses the firewall (see `docker-security.md`), so a service can end up reachable both through the tunnel and directly, which defeats the point.
 - IPv6: same rules apply. A box firewalled on v4 and wide open on v6 is a common miss — check both.
 
 ## Kernel hardening (sysctl)
