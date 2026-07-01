@@ -4,7 +4,7 @@
 
 A warden keeps the watch over a holding. Not the counsel that rules it (that's the Vizier) or the trades that build it (that's the Steading), but the quieter work of knowing every machine's health, keeping its defenses sound, and finding the rot before it spreads. This plugin does that for Linux hosts: reach the box, take its measure, report what ails it, harden what's soft, run down what's broken.
 
-It's four skills that Claude Code pulls in on its own when the work calls for a host, scoped so they stay quiet during ordinary coding, diffs, tests, or CI. You don't invoke them by name; you describe the job.
+It's four skills that Claude Code pulls in on its own when the work calls for a host, scoped so they stay quiet during ordinary coding, diffs, tests, or CI. You don't have to invoke them by name; describe the job and the right one loads. Or summon one deliberately with a slash command (see [Summoning it directly](#summoning-it-directly)).
 
 ## What it holds
 
@@ -14,6 +14,17 @@ It's four skills that Claude Code pulls in on its own when the work calls for a 
 | **health-check** | The whole-box rounds behind "how's my server." Specs, hardware health (SMART, sensors, RAID, ECC), memory and disk pressure, processes, failed services, kernel complaints, container health, and how current the OS/kernel/packages are — with an up-front warning if the release is end-of-life. Splits into a Device Health report and hands the security half to the audit. | *"let me know the health of my server"* |
 | **security-audit** | The walls. Hardening scan (Lynis, OpenSCAP), attack surface, account and auth hygiene, filesystem risk, mandatory access control (SELinux/AppArmor — recommend and teach where native), installed packages checked against known CVEs, and Docker/container scanning when a runtime is present. | *"run a security scan on this box"* · *"any vulnerable packages?"* |
 | **triage** | The alarm. When something's actually broken: a service crash-looping, a box gone slow, an OOM kill, a disk that filled. The method work of reproducing it, reading the logs, finding the real cause instead of the symptom. | *"nginx won't start on prod-db"* · *"why is this box slow?"* |
+
+## Summoning it directly
+
+Auto-trigger is the usual way in, but you can call a skill on purpose with a slash command, optionally naming the host as an argument:
+
+- `/warden-recon [host]` — reach the box and take stock (inventory + OS currency)
+- `/warden-health [host]` — the whole-box health check
+- `/warden-audit [host]` — the security + hardening audit
+- `/warden-triage [host] [symptom]` — run down a specific fault
+
+These run alongside auto-trigger, they don't replace it — a deliberate way to summon warden and pass a target. Same posture applies: a named remote host gets a scope-confirm before connecting; a local read-only check just runs.
 
 ## The one rule that matters: it reads before it touches
 
