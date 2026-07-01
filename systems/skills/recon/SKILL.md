@@ -75,7 +75,7 @@ Identifying the OS is the trigger, not the finish line: right away, establish ho
 
 Hand the numbers to `health-check` (pending updates, kernel reboot) and `security-audit` (EOL -> the rebuild call, CVE exposure). Flag confidence on anything not pulled live from the box or an authoritative source.
 
-**If the release is EOL, warn immediately.** Don't hold it for the final report. An out-of-support OS is piling up unpatched CVEs with no fix ever coming, so the moment the currency check shows it — or shows it *likely*, pending verification when there's no live source to confirm — say so plainly and up front. Lead with the warning, name the source that confirms it (`endoflife.date` / the vendor page), state your confidence, and carry the regenerate-don't-resurrect rebuild call from `security-audit`. Verified EOL is a stop-and-flag, not a quiet line item in a table.
+**If the release is EOL, warn immediately.** Don't hold it for the final report. An out-of-support OS is piling up unpatched CVEs with no fix ever coming, so the moment the currency check shows it — or shows it *likely*, pending verification when there's no live source to confirm — say so plainly and up front. Lead with the warning, name the source that confirms it (`endoflife.date` / the vendor page), state your confidence, and carry the regenerate-don't-resurrect rebuild call from `security-audit`. Verified EOL is a stop-and-flag, not a quiet line item in a table. Stop-and-flag means warn loudly, not down tools: the rebuild is the recommendation, and warden still goes on to secure the box as best it can — that harm-reduction pass (surface reduction, extended-support channels, MAC, firewall) is `security-audit`'s job.
 
 ### Handoff
 
