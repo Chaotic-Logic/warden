@@ -65,9 +65,9 @@ Don't cargo-cult a giant sysctl blob; check these, justify anything you'd change
 
 ## Mandatory access control
 
-- Is a MAC actually enforcing? SELinux on RHEL-family: `getenforce` (want `Enforcing`), `sestatus`. AppArmor on Debian/Ubuntu/SUSE: `aa-status` (profiles loaded, in enforce mode).
-- A box with no MAC active is a finding. On a SELinux-native distro, `Disabled`/`Permissive` is the finding and the fix is to enable it — safely, and taught, not flipped. Full runbook and the day-to-day lessons in `selinux.md`.
-- Don't recommend SELinux on an AppArmor distro (or vice versa); check whichever the distro ships.
+- Is a MAC actually enforcing? SELinux on RHEL-family: `getenforce` (want `Enforcing`), `sestatus`. AppArmor on Debian/Ubuntu/SUSE: `aa-status` (profiles loaded, in enforce mode), and `aa-unconfined` for network daemons with no profile at all.
+- A box with no MAC active is a finding, and so is an enabled AppArmor with the exposed daemons unprofiled (its coverage is per-app, not one switch). The fix is to enable and enforce it safely and taught, not flipped.
+- Match the distro's native system: recommend SELinux where it ships, AppArmor where it ships, never cross them. Runbooks and the day-to-day lessons in `selinux.md` and `apparmor.md`.
 
 ## Updates + patch discipline
 
