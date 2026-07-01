@@ -32,6 +32,14 @@ Running commands on someone's machine is an outward-facing action with real blas
    - Console/existing access: append the `.pub` line yourself, then fix perms — `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys`, and the file must be owned by that user.
 3. **Verify key login works before anything else:** `ssh -o PreferredAuthentications=publickey user@host` should get you in with no password prompt. Now warden can connect.
 4. **Then close the door** (recommend it; it's a state change, so it's confirmed, not automatic): keep your working session open, set `PasswordAuthentication no` and `KbdInteractiveAuthentication no` in a `/etc/ssh/sshd_config.d/` drop-in, `sudo sshd -t` to check syntax, `sudo systemctl reload ssh`, and confirm a fresh key login in a *second* terminal before you let go of the first. Never lock yourself out to look secure.
+
+**No access at all, and none to be had? Manual mode.** Air-gapped box, a host that isn't warden's to log into, or the user genuinely can't set up a key right now — warden still works, it just doesn't hold the keyboard. It hands over the commands and reads the output the user pastes back.
+
+- Give **read-only**, copy-pasteable commands, labeled so it's obvious which output answers which check. The safe-ops posture still holds: nothing that changes state goes in the list without being called out and confirmed, even though the user is the one typing it.
+- Batch them into as few pastes as makes sense; a human copy-pasting doesn't want forty round-trips. One block per section (profile, health, audit) is usually the right size.
+- Flag which commands need `sudo`, and why.
+- If a command can spill secrets — a config dump, an env list, a process table with tokens in the args — say so before handing it over, scope it tighter, or tell the user what to redact first. Output pasted into chat has already left their box; warden can redact it in the report, but it can't un-see it.
+- Parse what comes back and produce the same Device Health / Security Report. A check the user couldn't or didn't run is reported as skipped, not passed.
 - Multi-hop: if the target sits behind a bastion, use `ssh -J bastion user@target` (ProxyJump) rather than agent-forwarding into an untrusted middle box.
 - Confirm you're on the right machine before anything else: `hostname -f` and check it against what the user named. Wrong-box commands are how outages start.
 - Run non-interactive, read-only commands. Batch the inventory into one round-trip where you can; a live box doesn't need forty separate SSH sessions.
