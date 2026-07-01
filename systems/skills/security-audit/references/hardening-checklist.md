@@ -23,7 +23,7 @@ Config-level review, command per line. All read-only. Findings feed the Security
 - Empty passwords: `awk -F: '($2==""){print $1}' /etc/shadow` — none.
 - Login shells on system accounts: service accounts should be `nologin`/`false`, not a real shell.
 - Stale accounts: `lastlog | awk '$2=="**Never**"'` — accounts that never log in but could.
-- Failed logins / brute force: `lastb | head`, `journalctl -u ssh --no-pager | grep -i fail`. Repeated hits from one source = fail2ban's job; check it's running. Keep fail2ban even on a key-only box: turning off password auth doesn't make it pointless, it still bans the noise, shrinks log volume, and leaves an evidence trail of who's knocking. "Brute-force protection is useless once passwords are off" is wrong.
+- Failed logins / brute force: `lastb | head`, `journalctl -u ssh --no-pager | grep -i fail`. Repeated hits from one source = the intrusion-banning layer's job (fail2ban across all these families, or CrowdSec for a modern cross-distro take); check one's running. Keep it even on a key-only box: turning off password auth doesn't make it pointless, it still bans the noise, shrinks log volume, and leaves an evidence trail of who's knocking. "Brute-force protection is useless once passwords are off" is wrong.
 - Password aging policy: `/etc/login.defs` (`PASS_MAX_DAYS`, `PASS_MIN_LEN` era) and PAM `pam_pwquality`/`pam_faillock` config for lockout on repeated failures.
 
 ## sudo / privilege
@@ -74,8 +74,8 @@ Don't cargo-cult a giant sysctl blob; check these, justify anything you'd change
 
 ## Updates + patch discipline
 
-- Automatic security updates configured? (`unattended-upgrades` on debian, `dnf-automatic` on rhel). Note whether it's on and whether it's set to security-only.
-- Read the transaction before you apply it. No blind `dnf -y` / `apt -y` on a box that matters; look at what's added, upgraded, and especially **removed** — dependency resolution will cheerfully pull a package you wanted (removing an old mail server that takes `fail2ban` down with it is a real way to un-harden yourself by accident). Read it, then say yes.
+- Automatic security updates configured, per family? `unattended-upgrades` (Debian/Ubuntu), `dnf-automatic` (RHEL/Rocky/Alma/Fedora), the `zypper` patch timer or YaST online-update (SUSE). Arch is rolling with no security-only channel, so there's no unattended-security concept — the discipline there is a regular hands-on `pacman -Syu`, and auto-updating Arch unattended is discouraged. Check whether it's on and scoped to security where the family supports that split.
+- Read the transaction before you apply it, whichever package manager. No blind auto-yes on a box that matters (`apt -y`, `dnf -y`, `zypper -n`, `pacman --noconfirm`); look at what's added, upgraded, and especially **removed** — dependency resolution will cheerfully pull a package you wanted (removing an old mail server that takes `fail2ban` down with it is a real way to un-harden yourself by accident). Preview first: `apt -s` / `apt full-upgrade`, `dnf` prints the transaction before the prompt, `zypper --dry-run`, `pacman -Syu` lists it (and `pacman -Rns` removals bite hardest). Read it, then say yes.
 - Pending reboot for a kernel/glibc update — a patched-but-not-rebooted box is still vulnerable. Cross-check with the CVE reference.
 
 ## Logging + audit
