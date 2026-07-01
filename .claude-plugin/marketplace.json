@@ -1,0 +1,14 @@
+{
+  "name": "warden",
+  "owner": { "name": "Sean Stoves" },
+  "metadata": {
+    "description": "The Warden — keeps the watch over the machines: their health, their hardening, and what ails them. Walks the walls, checks the stores, names the rot before it spreads. Shareable."
+  },
+  "plugins": [
+    {
+      "name": "warden",
+      "source": "./systems",
+      "description": "System engineering and security for Linux hosts — connect and take stock, report a box's health, audit its hardening and exposure, and run down what's broken. Reads before it touches; anything that changes state waits for a yes. Defers its global gate to the Vizier when that stands beside it."
+    }
+  ]
+}

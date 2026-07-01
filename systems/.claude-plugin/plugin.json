@@ -1,0 +1,7 @@
+{
+  "name": "warden",
+  "version": "0.1.0",
+  "description": "System engineering and security skills for Linux hosts: connect-and-inventory recon, whole-box health checks, security/hardening audits with per-distro CVE tooling, and service/crash triage. Read-only by default; state changes wait for confirmation. Defers its global gate to vizier when that is enabled.",
+  "author": { "name": "Sean Stoves" },
+  "keywords": ["sysadmin", "security", "hardening", "linux", "health-check", "cve", "troubleshooting", "ops"]
+}

@@ -1,0 +1,13 @@
+{
+  "description": "Standalone gate + minimalism injection for machines where vizier is NOT enabled. No-ops when core owns those rules.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact|resume",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-standalone.sh", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}
